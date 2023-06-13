@@ -19,7 +19,7 @@ export const jsonData: ISearchInput = {
     max: 1000,
   },
   destination: {
-    country: 'France',
+    city: 'Bordeaux',
   },
   date: {
     startDate: '2023-09-01',
