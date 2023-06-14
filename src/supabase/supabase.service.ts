@@ -5,7 +5,7 @@ import { SearchService } from '../search/search.service';
 
 @Injectable()
 export class SupabaseService {
-  private supabaseUrl = 'https://scksfmmylkkaqkckvvek.supabase.co';
+  private supabaseUrl = process.env.SUPABASE_URL;
   private supabaseKey = process.env.SUPABASE_KEY;
   private supabase = createClient(this.supabaseUrl, this.supabaseKey);
 
