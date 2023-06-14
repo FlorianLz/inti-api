@@ -24,6 +24,7 @@
     "@nestjs/config": "^2.3.3",
     "@nestjs/core": "^9.0.5",
     "@nestjs/platform-express": "^9.0.0",
+    "@supabase/supabase-js": "^2.25.0",
     "amadeus": "^8.0.0",
     "axios": "^1.4.0",
     "opencage-api-client": "^1.0.1",
