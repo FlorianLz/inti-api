@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ISearchInput } from '../interfaces';
 import { amadeus } from '../amadeus/init';
-import { isObject } from '@nestjs/common/utils/shared.utils';
+import { SearchTransportService } from './transports/search-transport.service';
 
 @Injectable()
 export class SearchService {
+  @Inject(SearchTransportService)
+  private readonly searchTransportService: SearchTransportService;
+
   async getSearch(params: ISearchInput) {
     console.log(params.destination.city);
     const response = await amadeus.referenceData.locations.cities.get({
@@ -45,7 +48,10 @@ export class SearchService {
         radiusUnit: 'KM',
         checkInDate: params.date.startDate,
         checkOutDate: params.date.endDate,
-        roomQuantity: params.nbPerson.adults % 2 === 0 ? params.nbPerson.adults / 2 : params.nbPerson.adults / 2 + 1,
+        roomQuantity:
+          params.nbPerson.adults % 2 === 0
+            ? params.nbPerson.adults / 2
+            : params.nbPerson.adults / 2 + 1,
       });
       result.push(offers.data);
     }
@@ -65,9 +71,17 @@ export class SearchService {
               element.offers[0].price.currency
             : 'No price',
           pricePerNight: element.offers[0].price.total / params.date.nbDays,
-          pricePerNightPerPerson: element.offers[0].price.total / params.date.nbDays / 2,
-          nbRooms: params.nbPerson.adults % 2 === 0 ? params.nbPerson.adults / 2 : params.nbPerson.adults / 2 + 1,
-          totalPrice: element.offers[0].price.total * (params.nbPerson.adults % 2 === 0 ? params.nbPerson.adults / 2 : params.nbPerson.adults / 2 + 1),
+          pricePerNightPerPerson:
+            element.offers[0].price.total / params.date.nbDays / 2,
+          nbRooms:
+            params.nbPerson.adults % 2 === 0
+              ? params.nbPerson.adults / 2
+              : params.nbPerson.adults / 2 + 1,
+          totalPrice:
+            element.offers[0].price.total *
+            (params.nbPerson.adults % 2 === 0
+              ? params.nbPerson.adults / 2
+              : params.nbPerson.adults / 2 + 1),
         });
       }
     });
