@@ -2,6 +2,7 @@ export interface ISearchInput {
   nbPerson: INbPerson;
   transport: ITransport;
   budget?: IBudget;
+  departure: ILocation;
   destination: IDestination;
   date: IDateInput;
   handicap?: boolean;

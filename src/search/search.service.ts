@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ISearchInput } from '../interfaces';
 import { amadeus } from '../amadeus/init';
-import { isObject } from '@nestjs/common/utils/shared.utils';
+import { SearchTransportService } from './transports/search-transport.service';
 
 @Injectable()
 export class SearchService {
+  @Inject(SearchTransportService)
+  private readonly searchTransportService: SearchTransportService;
+
   async getSearch(params: ISearchInput) {
     //console.log(params.destination.city);
     try {

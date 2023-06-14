@@ -398,5 +398,3 @@ Temporary Items
 dist
 .webpack
 .serverless/**/*.zip
-
-./src/amadeus/init.ts

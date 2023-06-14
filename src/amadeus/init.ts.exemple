@@ -1,6 +1,0 @@
-var Amadeus = require('amadeus');
-
-export const amadeus = new Amadeus({
-  clientId: 'XXXXXX',
-  clientSecret: 'XXXXXXX',
-});
