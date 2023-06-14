@@ -18,6 +18,10 @@ export const jsonData: ISearchInput = {
     min: 0,
     max: 1000,
   },
+  departure: {
+    latitude: 50.63249610631816,
+    longitude: 3.052219302864069,
+  },
   destination: {
     city: 'Bordeaux',
   },
