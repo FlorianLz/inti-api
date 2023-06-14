@@ -15,6 +15,7 @@ export interface ISearchInput {
 
 export interface IDestination {
   country?: string;
+  countryCode?: string;
   city?: string;
   continent?: string;
 }
