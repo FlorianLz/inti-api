@@ -7,7 +7,7 @@ export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Get('search')
-  getSearch(): string {
+  getSearch() {
     return this.searchService.getSearch(jsonData);
   }
 }
