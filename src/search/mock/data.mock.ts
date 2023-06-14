@@ -2,7 +2,7 @@ import { ISearchInput } from '../../interfaces';
 
 export const jsonData: ISearchInput = {
   nbPerson: {
-    adults: 2,
+    adults: 4,
     children: 0,
     babies: 0,
   },
@@ -22,8 +22,8 @@ export const jsonData: ISearchInput = {
     city: 'Bordeaux',
   },
   date: {
-    startDate: '2023-09-01',
-    endDate: '2023-09-09',
+    startDate: '2023-06-20',
+    endDate: '2023-06-27',
     nbDays: 8,
     isFlexible: false,
   },
