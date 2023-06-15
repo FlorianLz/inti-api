@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { SearchTransportService } from './search-transport.service';
 import { SearchTransportController } from './search-transport.controller';
-import { HttpModule } from '@nestjs/axios';
+import { AmadeusModule } from '../../../api/amadeus/amadeus.module';
 
 @Module({
-  imports: [HttpModule],
+  imports: [AmadeusModule],
   controllers: [SearchTransportController],
   providers: [SearchTransportService],
   exports: [SearchTransportService],

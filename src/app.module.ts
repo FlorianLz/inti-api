@@ -1,19 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SearchModule } from './search/search.module';
-import { SupabaseController } from './supabase/supabase.controller';
-import { SupabaseService } from './supabase/supabase.service';
-import { SupabaseModule } from './supabase/supabase.module';
+import { SearchModule } from './app/search/search.module';
 import { ConfigModule } from '@nestjs/config';
-import { SearchService } from './search/search.service';
-import { SearchController } from './search/search.controller';
 
-ConfigModule.forRoot();
+ConfigModule.forRoot({
+  isGlobal: true,
+});
 
 @Module({
-  imports: [SearchModule, SupabaseModule],
-  controllers: [AppController, SupabaseController, SearchController],
-  providers: [AppService, SupabaseService, SearchService],
+  imports: [SearchModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

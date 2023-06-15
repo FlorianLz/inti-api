@@ -1,10 +1,10 @@
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
 import { Module } from '@nestjs/common';
-import { SearchTransportModule } from './transports/search-transport.module';
+import { SearchTripModule } from './trip/search-trip.module';
 
 @Module({
-  imports: [SearchTransportModule],
+  imports: [SearchTripModule],
   controllers: [SearchController],
   providers: [SearchService],
 })
