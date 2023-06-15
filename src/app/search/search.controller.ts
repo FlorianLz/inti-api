@@ -1,13 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
 import { SearchService } from './search.service';
-import { jsonData } from './mock/data.mock';
+import { jsonData } from '../../data/mock/data-country.mock';
 
 @Controller()
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Get('search')
-  getSearch() {
-    return this.searchService.getSearch(jsonData);
+  async getSearch() {
+    return await this.searchService.getSearch(jsonData);
   }
 }

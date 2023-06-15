@@ -1,61 +1,57 @@
-import { Injectable } from '@nestjs/common';
-import { ILocation, ISearchInput } from '../../interfaces';
-import { HttpService } from '@nestjs/axios';
-import { amadeus } from '../../amadeus/init';
-import { IFlight } from '../../interfaces/flight.interfaces';
+import { Inject, Injectable } from '@nestjs/common';
+import { ILocation, ISearchInput } from '../../../interfaces';
+import { IFlight } from '../../../interfaces/flight.interfaces';
+import { AmadeusService } from '../../../api/amadeus/amadeus.service';
 
 @Injectable()
 export class SearchTransportService {
-  constructor(private readonly httpService: HttpService) {}
-
-  async getAvailableTransportForSearchBooking(
-    searchInput: ISearchInput,
-    bookingPosition: ILocation,
-  ) {
-    const flights = await this.getFlights(searchInput, bookingPosition);
-    return { flights };
-  }
+  @Inject(AmadeusService)
+  private readonly amadeusService: AmadeusService;
 
   async getNearestAirport(position: ILocation) {
-    const response = await amadeus.referenceData.locations.airports.get({
-      latitude: `${position.latitude}`,
-      longitude: `${position.longitude}`,
-      radius: 500,
-      page: {
-        limit: 10,
-        offset: 0,
-      },
-      sort: 'relevance',
-    });
+    const response = await this.amadeusService
+      .getClient()
+      .referenceData.locations.airports.get({
+        latitude: `${position.latitude}`,
+        longitude: `${position.longitude}`,
+        radius: 500,
+        page: {
+          limit: 10,
+          offset: 0,
+        },
+        sort: 'relevance',
+      });
 
-    console.log(response.result.meta.count);
     return response.result.data[0];
   }
 
   async getFlights(
     searchInput: ISearchInput,
     bookingPosition: ILocation,
-  ): Promise<IFlight> {
+  ): Promise<IFlight | null> {
     const nearestDepartureAirport = await this.getNearestAirport({
       ...searchInput.departure,
     });
 
     const nearestArrivalAirport = await this.getNearestAirport(bookingPosition);
 
-    const response = await amadeus.shopping.flightOffersSearch.get({
-      originLocationCode: nearestDepartureAirport.iataCode,
-      destinationLocationCode: nearestArrivalAirport.iataCode,
-      departureDate: searchInput.date.startDate,
-      adults: searchInput.nbPerson.adults,
-      children: searchInput.nbPerson.children,
-      infants: searchInput.nbPerson.babies,
-    });
+    const response = await this.amadeusService
+      .getClient()
+      .shopping.flightOffersSearch.get({
+        originLocationCode: nearestDepartureAirport.iataCode,
+        destinationLocationCode: nearestArrivalAirport.iataCode,
+        departureDate: searchInput.date.startDate,
+        adults: searchInput.nbPerson.adults,
+        children: searchInput.nbPerson.children,
+        infants: searchInput.nbPerson.babies,
+      });
 
     const rawFlight = response.result.data[0];
     return this.rawFlightToFlight(rawFlight);
   }
 
   rawFlightToFlight(rawFlight: any): IFlight {
+    if (!rawFlight) return null;
     const itinerarySegments = rawFlight.itineraries[0].segments.map(
       (segment) => {
         return {
@@ -116,7 +112,7 @@ export class SearchTransportService {
     return {
       bookableSeats: rawFlight.numberOfBookableSeats ?? 0,
       oneWay: rawFlight.oneWay ?? false,
-      price: `${rawFlight.price.grandTotal ?? 0} ${rawFlight.price.currency}`,
+      price: `${rawFlight.price.grandTotal ?? 0}`,
       itinerary: itinerary,
       fees: fees,
       additionalServices: additionalServices,
