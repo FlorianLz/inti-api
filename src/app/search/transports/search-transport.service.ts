@@ -29,25 +29,26 @@ export class SearchTransportService {
     searchInput: ISearchInput,
     bookingPosition: ILocation,
   ): Promise<IFlight | null> {
-    const nearestDepartureAirport = await this.getNearestAirport({
-      ...searchInput.departure,
-    });
-
+    const nearestDepartureAirport = searchInput.departureAirport.iataCode;
     const nearestArrivalAirport = await this.getNearestAirport(bookingPosition);
 
-    const response = await this.amadeusService
-      .getClient()
-      .shopping.flightOffersSearch.get({
-        originLocationCode: nearestDepartureAirport.iataCode,
-        destinationLocationCode: nearestArrivalAirport.iataCode,
-        departureDate: searchInput.date.startDate,
-        adults: searchInput.nbPerson.adults,
-        children: searchInput.nbPerson.children,
-        infants: searchInput.nbPerson.babies,
-      });
-
-    const rawFlight = response.result.data[0];
-    return this.rawFlightToFlight(rawFlight);
+    try {
+      const response = await this.amadeusService
+        .getClient()
+        .shopping.flightOffersSearch.get({
+          originLocationCode: nearestDepartureAirport,
+          destinationLocationCode: nearestArrivalAirport.iataCode,
+          departureDate: searchInput.date.startDate,
+          adults: searchInput.nbPerson.adults,
+          children: searchInput.nbPerson.children,
+          infants: searchInput.nbPerson.babies,
+        });
+      const rawFlight = response.result.data[0];
+      return this.rawFlightToFlight(rawFlight);
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
   }
 
   rawFlightToFlight(rawFlight: any): IFlight {

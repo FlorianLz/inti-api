@@ -8,6 +8,7 @@ export class AmadeusService {
     return new Amadeus({
       clientId: process.env.AMADEUS_CLIENT_ID,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET,
+      logLevel: process.env.AMADEUS_LOG_LEVEL,
     });
   }
 }

@@ -24,20 +24,20 @@ export class SearchTripService {
   ): Promise<ITrip[]> {
     const trips = [];
     const searchedFlights = [];
-    for (const booking of bookings) {
-      const bookingsCityPosition = `${booking.cityPosition.latitude},${booking.cityPosition.longitude}`;
-      if (!searchedFlights[bookingsCityPosition]) {
-        searchedFlights[bookingsCityPosition] =
-          await this.searchTransportService.getFlights(
-            params,
-            booking.cityPosition,
-          );
-      }
 
+    if (!bookings) return trips;
+    for (const booking of bookings) {
+      if (typeof searchedFlights[booking.cityName] === 'undefined') {
+        const flight = await this.searchTransportService.getFlights(
+          params,
+          booking.cityPosition,
+        );
+        searchedFlights[booking.cityName] = flight ?? null;
+      }
       const trip = this.buildTripWithFlightAndBooking(
         params,
         booking,
-        searchedFlights[bookingsCityPosition],
+        searchedFlights[booking.cityName],
       );
 
       trips.push(trip);

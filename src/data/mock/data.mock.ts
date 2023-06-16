@@ -16,7 +16,7 @@ export const jsonData: ISearchInput = {
   },
   budget: {
     min: 0,
-    max: 1000,
+    max: 10000,
   },
   departure: {
     latitude: 50.63249610631816,
@@ -26,8 +26,8 @@ export const jsonData: ISearchInput = {
     city: 'Bordeaux',
   },
   date: {
-    startDate: '2023-06-20',
-    endDate: '2023-06-27',
+    startDate: '2023-07-20',
+    endDate: '2023-07-27',
     nbDays: 8,
     isFlexible: false,
   },
@@ -50,4 +50,7 @@ export const jsonData: ISearchInput = {
     sea: true,
   },
   nearFromCity: false,
+  equipments: {
+    swimmingPool: true,
+  },
 };
