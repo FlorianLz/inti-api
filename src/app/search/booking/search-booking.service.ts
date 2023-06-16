@@ -4,7 +4,8 @@ import { ILocation, ISearchInput } from '../../../interfaces';
 import { SupabaseService } from '../../../api/supabase/supabase.service';
 import { IBooking } from '../../../interfaces/booking.interfaces';
 import { HttpService } from '@nestjs/axios';
-import {OpencageService} from "../../../api/opencage/opencage.service";
+import { OpencageService } from '../../../api/opencage/opencage.service';
+import { PricelineService } from '../../../api/priceline/priceline.service';
 
 @Injectable()
 export class SearchBookingService {
@@ -16,6 +17,8 @@ export class SearchBookingService {
   private readonly httpService: HttpService;
   @Inject(OpencageService)
   private readonly opencageService: OpencageService;
+  @Inject(PricelineService)
+  private readonly pricelineService: PricelineService;
 
   async getBookings(params: ISearchInput) {
     if (!params.destination.city) {
@@ -26,13 +29,13 @@ export class SearchBookingService {
 
   async getCityGeocode(city: string, countryCode: string): Promise<ILocation> {
     try {
-      const response = await this.amadeusService
-        .getClient()
-        .referenceData.locations.cities.get({
-          keyword: city,
-          countryCode: countryCode,
-        });
-      return response.data[0].geoCode;
+      const response = await this.opencageService.getForwardGeocoding(
+        `${city},${countryCode}`,
+      );
+      return {
+        longitude: response.data.results[0].geometry.lng,
+        latitude: response.data.results[0].geometry.lat,
+      };
     } catch (error) {
       console.log(error);
     }
@@ -75,98 +78,80 @@ export class SearchBookingService {
     params: ISearchInput,
     geoCode: ILocation,
   ): Promise<IBooking[]> {
-    try {
-      const { cityName, countryName } =
-        await this.getCityNameAndCountryNameByGeocode(geoCode);
-      const hotels = await this.amadeusService
-        .getClient()
-        .referenceData.locations.hotels.byGeocode.get({
-          latitude: geoCode.latitude,
-          longitude: geoCode.longitude,
-        });
-      if (hotels.result.data !== undefined) {
-        const hotelsIds = hotels.data.map((hotel) => hotel.hotelId);
+    const { cityName, countryName } =
+      await this.getCityNameAndCountryNameByGeocode(geoCode);
+    let hasAllRequiredAmenities = true;
+    const requiredAmenities = this.getAmenitiesArrayFromSearchInput(params);
+    const data = await this.pricelineService.getSearchExpressResults({
+      latitude: geoCode.latitude,
+      longitude: geoCode.longitude,
+      check_in: params.date.startDate,
+      check_out: params.date.endDate,
+      limit: '100',
+      language: 'fr-FR',
+      output_version: '3',
+      sid: 'iSiX639',
+    });
+    const hotels = data['getHotelExpress.Results'].results.hotel_data;
+    const hotelKeys = Object.keys(hotels);
+    const hotelsArray = [];
 
-        function chunkArray(array, chunkSize) {
-          const result = [];
-          for (let i = 0; i < array.length; i += chunkSize) {
-            const chunk = array.slice(i, i + chunkSize);
-            result.push(chunk);
-          }
-          return result;
+    hotelKeys.forEach((key) => {
+      const hotel = hotels[key];
+      const amenitiesKeys = Object.keys(hotel.amenity_data);
+      const amenities = amenitiesKeys.map((key) => {
+        return hotel.amenity_data[key].name;
+      });
+
+      requiredAmenities.forEach((requiredAmenity) => {
+        if (!amenities.includes(requiredAmenity)) {
+          hasAllRequiredAmenities = false;
         }
+      });
 
-        const chunkedArray = chunkArray(hotelsIds, 110);
-
-        const result = [];
-        for (const chunk of chunkedArray) {
-          const hotelIds = `'[${chunk.map((hotel) => `"${hotel}"`)}]'`;
-          //console.log(hotelIds);
-          const offers = await this.amadeusService
-            .getClient()
-            .shopping.hotelOffersSearch.get({
-              hotelIds: hotelIds,
-              priceRange: '0-3000',
-              currency: 'EUR',
-              adults: 2,
-              radius: 30,
-              radiusUnit: 'KM',
-              checkInDate: params.date.startDate,
-              checkOutDate: params.date.endDate,
-              roomQuantity: Math.ceil(params.nbPerson.adults / 2),
-            });
-          result.push(offers.data);
-        }
-
-        const res = result[0];
-
-        const final = [];
-        res.forEach((element) => {
-          //console.log(element);
-          if (element.type === 'hotel-offers') {
-            //console.log(element.offers);
-            final.push({
-              hotelName: element.hotel.name ?? 'No name',
-              pricePerRoom: element.offers[0].price.total
-                ? element.offers[0].price.total
-                : 'No price',
-              pricePerNight: `${
-                element.offers[0].price.total / params.date.nbDays
-              }`,
-              pricePerNightPerPerson: `${
-                element.offers[0].price.total / params.date.nbDays / 2
-              }`,
-              nbRooms:
-                params.nbPerson.adults % 2 === 0
-                  ? params.nbPerson.adults / 2
-                  : params.nbPerson.adults / 2 + 1,
-              totalPrice: `${
-                element.offers[0].price.total *
-                (params.nbPerson.adults % 2 === 0
-                  ? params.nbPerson.adults / 2
-                  : params.nbPerson.adults / 2 + 1)
-              }`,
-              nbDays: params.date.nbDays,
-              startDate: params.date.startDate,
-              endDate: params.date.endDate,
-              hotelPosition: {
-                latitude: element.hotel.latitude,
-                longitude: element.hotel.longitude,
-              },
-              cityPosition: {
-                latitude: geoCode.latitude,
-                longitude: geoCode.longitude,
-              },
-              cityName: cityName,
-              countryName: countryName,
-            });
-          }
+      if (hasAllRequiredAmenities) {
+        const room = hotel.room_data.room_0;
+        if (!room) return;
+        const roomRate = room.rate_data.rate_0;
+        const countPersons = params.nbPerson.adults + params.nbPerson.children;
+        const neededRooms = Math.ceil(roomRate.occupancy_limit / countPersons);
+        hotelsArray.push({
+          hotelName: hotel.name ?? 'No name',
+          pricePerRoom: roomRate.price_details.display_total * neededRooms,
+          pricePerNight: `${
+            (roomRate.price_details.display_total * neededRooms) /
+            params.date.nbDays
+          }`,
+          pricePerNightPerPerson: `${
+            (roomRate.price_details.display_total * neededRooms) /
+            params.date.nbDays /
+            countPersons
+          }`,
+          nbRooms: neededRooms,
+          totalPrice: `${roomRate.price_details.display_total}`,
+          nbDays: params.date.nbDays,
+          startDate: params.date.startDate,
+          endDate: params.date.endDate,
+          hotelPosition: {
+            latitude: hotel.geo.latitude,
+            longitude: hotel.geo.longitude,
+          },
+          cityPosition: {
+            latitude: geoCode.latitude,
+            longitude: geoCode.longitude,
+          },
+          cityName: cityName,
+          countryName: countryName,
+          amenities: amenities,
+          thumbnail: `https:${hotel.thumbnail_hq.three_hundred_square}`,
+          description: hotel.hotel_description,
         });
-        return final;
       }
-    } catch (error) {
-      console.log(error);
-    }
+
+      hasAllRequiredAmenities = true;
+    });
+
+    return hotelsArray;
   }
 
   async getCitiesByCountry(country: string) {
@@ -175,10 +160,10 @@ export class SearchBookingService {
       .getClient()
       .from('cities')
       .select('*')
-      .eq('countryName', country)
-      .limit(3);
+      .eq('countryName', country);
     return data;
   }
+
   async getCityNameAndCountryNameByGeocode(geoCode: ILocation) {
     try {
       const response = await this.opencageService.getReverseGeocoding(geoCode);
@@ -189,5 +174,42 @@ export class SearchBookingService {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  getAmenitiesArrayFromSearchInput(params: ISearchInput) {
+    const amenitiesArray = [];
+    if (params.equipments?.swimmingPool) {
+      amenitiesArray.push('Swimming Pool');
+    }
+    if (params.equipments?.parking) {
+      amenitiesArray.push('Free Parking');
+    }
+    if (params.equipments?.spa) {
+      amenitiesArray.push('SPA');
+    }
+    if (params.equipments?.restaurant) {
+      amenitiesArray.push('Restaurant');
+    }
+    if (params.equipments?.bar) {
+      amenitiesArray.push('BAR or LOUNGE');
+    }
+    if (params.equipments?.gym) {
+      amenitiesArray.push('FITNESS_CENTER');
+    }
+    if (params.equipments?.airConditioning) {
+      amenitiesArray.push('AIR_CONDITIONING');
+    }
+    if (params.equipments?.petFriendly) {
+      amenitiesArray.push('Pets Allowed');
+    }
+    if (params.equipments?.kidsFriendly) {
+      amenitiesArray.push('KIDS_WELCOME');
+    }
+
+    return amenitiesArray;
+  }
+
+  arrayToRequestString(array: string[]) {
+    return `'[${array.map((item) => `"${item}"`)}]'`;
   }
 }

@@ -4,10 +4,16 @@ import { SearchBookingController } from './search-booking.controller';
 import { HttpModule } from '@nestjs/axios';
 import { AmadeusModule } from '../../../api/amadeus/amadeus.module';
 import { SupabaseModule } from '../../../api/supabase/supabase.module';
-import {OpencageModule} from "../../../api/opencage/opencage.module";
-
+import { PricelineModule } from '../../../api/priceline/priceline.module';
+import { OpencageModule } from '../../../api/opencage/opencage.module';
 @Module({
-  imports: [HttpModule, AmadeusModule, SupabaseModule, OpencageModule],
+  imports: [
+    HttpModule,
+    AmadeusModule,
+    SupabaseModule,
+    PricelineModule,
+    OpencageModule,
+  ],
   controllers: [SearchBookingController],
   providers: [SearchBookingService],
   exports: [SearchBookingService],

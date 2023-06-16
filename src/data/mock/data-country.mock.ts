@@ -23,7 +23,7 @@ export const jsonData: ISearchInput = {
     longitude: 3.052219302864069,
   },
   destination: {
-    country: 'Italy',
+    country: 'France',
   },
   date: {
     startDate: '2023-06-20',
@@ -50,4 +50,8 @@ export const jsonData: ISearchInput = {
     sea: true,
   },
   nearFromCity: false,
+  equipments: {
+    parking: true,
+    swimmingPool: true,
+  },
 };

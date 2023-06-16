@@ -3,6 +3,7 @@ export interface ISearchInput {
   transport: ITransport;
   budget?: IBudget;
   departure: ILocation;
+  departureAirport?: IAirport;
   destination: IDestination;
   date: IDateInput;
   handicap?: boolean;
@@ -135,4 +136,14 @@ export interface INbPerson {
 export interface IFormStep {
   name: string;
   value: any;
+}
+
+export interface IAirport {
+  type: string;
+  subType: string;
+  name: string;
+  detailedName: string;
+  timeZoneOffset: string;
+  iataCode: string;
+  geoCode: ILocation;
 }

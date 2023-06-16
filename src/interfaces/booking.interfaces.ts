@@ -14,4 +14,7 @@ export interface IBooking {
   cityPosition: ILocation;
   cityName: string;
   countryName: string;
+  amenities: string[];
+  thumbnail: string;
+  description: string;
 }
