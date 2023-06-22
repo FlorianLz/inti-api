@@ -31,18 +31,18 @@ export class SearchTransportService {
   ): Promise<IFlight | null> {
     const nearestDepartureAirport = searchInput.departureAirport.iataCode;
     const nearestArrivalAirport = await this.getNearestAirport(bookingPosition);
-
+    const params = {
+      originLocationCode: nearestDepartureAirport,
+      destinationLocationCode: nearestArrivalAirport.iataCode,
+      departureDate: searchInput.date.startDate,
+      adults: searchInput.nbPerson.adults,
+      children: searchInput.nbPerson.children,
+      infants: searchInput.nbPerson.babies,
+    };
     try {
       const response = await this.amadeusService
         .getClient()
-        .shopping.flightOffersSearch.get({
-          originLocationCode: nearestDepartureAirport,
-          destinationLocationCode: nearestArrivalAirport.iataCode,
-          departureDate: searchInput.date.startDate,
-          adults: searchInput.nbPerson.adults,
-          children: searchInput.nbPerson.children,
-          infants: searchInput.nbPerson.babies,
-        });
+        .shopping.flightOffersSearch.get(params);
       const rawFlight = response.result.data[0];
       return this.rawFlightToFlight(rawFlight);
     } catch (error) {
