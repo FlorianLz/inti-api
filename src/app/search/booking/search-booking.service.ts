@@ -82,7 +82,7 @@ export class SearchBookingService {
       await this.getCityNameAndCountryNameByGeocode(geoCode);
     let hasAllRequiredAmenities = true;
     const requiredAmenities = this.getAmenitiesArrayFromSearchInput(params);
-    const data = await this.pricelineService.getSearchExpressResults({
+    const paramsa = {
       latitude: geoCode.latitude,
       longitude: geoCode.longitude,
       check_in: params.date.startDate,
@@ -91,7 +91,9 @@ export class SearchBookingService {
       language: 'fr-FR',
       output_version: '3',
       sid: 'iSiX639',
-    });
+    };
+    const data = await this.pricelineService.getSearchExpressResults(paramsa);
+    console.log(paramsa);
     const hotels = data['getHotelExpress.Results'].results.hotel_data;
     const hotelKeys = Object.keys(hotels);
     const hotelsArray = [];

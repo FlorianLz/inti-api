@@ -26,8 +26,8 @@ export const jsonData: ISearchInput = {
     country: 'France',
   },
   date: {
-    startDate: '2023-06-20',
-    endDate: '2023-06-27',
+    startDate: '2023-07-20',
+    endDate: '2023-07-27',
     nbDays: 8,
     isFlexible: false,
   },
